@@ -15,7 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     points=new QPoint[100];
-
+    Spline=NULL;
+    Curve=NULL;
     Pix=QPixmap(1000,800);
     tempPix=QPixmap(1000,800);
     timer=new QTimer(this);
@@ -25,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete[] points;
     delete ui;
 }
 
@@ -51,13 +53,22 @@ void MainWindow::init()
 
 void MainWindow::on_Createbtn_clicked()
 {
+    if(n<=1)return;
     iscurve=true;
     grain=ui->spinBox->value();
     tension=(double)ui->horizontalSlider->value()/100.0;
     //CSpline line(points,n,grain,tension);
     allpt=(grain+1)*(n-1)+1;
-    qDebug()<<"allpt="<<allpt<<endl;
-    CSpline(Spline,points,grain,tension,n);
+    if(Curve)
+    {
+        //qDebug()<<"delete"<<endl;
+        delete Curve;
+        Curve=NULL;
+    }
+    Curve=new CSpline(points,n,grain,tension);
+    Spline=Curve->Spline;
+    Arc=Curve->Arc;
+    ArcAll=Curve->ArcAll;
     //memcpy(Spline,line.Spline,sizeof(QPoint)*allpt);
     Pix.fill(Qt::white);
     ui->carbtn->setEnabled(true);
@@ -88,16 +99,16 @@ void MainWindow::paintEvent(QPaintEvent*)
 
     path2.moveTo(points[0].x(),points[0].y());
 
-    arc[0][0]=0;
-    arc[0][1]=0;
+   // arc[0][0]=0;
+  //  arc[0][1]=0;
     for(int i=1;i<allpt;i++)
     {
         path2.lineTo(Spline[i].x(),Spline[i].y());
         if(ispot)path2.addEllipse(Spline[i],2,2);
         //pp.setBrush(Qt::NoBrush);
         path2.moveTo(Spline[i].x(),Spline[i].y());
-        arc[i][0]=sqrt(pow(Spline[i].x()-Spline[i-1].x(),2)+pow(Spline[i].y()-Spline[i-1].y(),2));
-        arc[i][1]=arc[i-1][1]+arc[i][0];
+       // arc[i][0]=sqrt(pow(Spline[i].x()-Spline[i-1].x(),2)+pow(Spline[i].y()-Spline[i-1].y(),2));
+       // arc[i][1]=arc[i-1][1]+arc[i][0];
        // qDebug()<<i<<"  "<<arc[i][0]<<"  "<<arc[i][1]<<endl;
     }
     pp.setBrush(Qt::red);
@@ -105,12 +116,13 @@ void MainWindow::paintEvent(QPaintEvent*)
     if(isball)
     {
         double d=50;
-        if(curi>0)
-            if(curi<allpt)angle=(qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x())
-                +qAtan2(Spline[curi+1].y()-Spline[curi].y(),Spline[curi+1].x()-Spline[curi].x()))*0.5;
-            else
-                angle=qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x());
-        else angle=qAtan2(Spline[1].y()-Spline[0].y(),Spline[1].x()-Spline[0].x());
+        qDebug()<<"i="<<curi<<endl;
+        if(curi>0);
+//            if(curi<allpt)angle=(qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x())
+//                +qAtan2(Spline[curi+1].y()-Spline[curi].y(),Spline[curi+1].x()-Spline[curi].x()))*0.5;
+//            else
+//                angle=qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x());
+        else angle=qAtan2(Spline[2].y()-Spline[1].y(),Spline[2].x()-Spline[1].x());
         pp.save();
         pp.translate(curpos.x(),curpos.y());
         pp.rotate(angle/3.14*180.0);
@@ -130,18 +142,20 @@ void MainWindow::paintEvent(QPaintEvent*)
     if(iscar)
     {
         double w=60.0,h=40.0;
-        if(curi>0)
-            if(curi<allpt)angle=(qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x())
-                +qAtan2(Spline[curi+1].y()-Spline[curi].y(),Spline[curi+1].x()-Spline[curi].x()))*0.5;
-            else
-                angle=qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x());
-        else angle=qAtan2(Spline[1].y()-Spline[0].y(),Spline[1].x()-Spline[0].x());
-        qDebug()<<angle<<endl;
+        qDebug()<<"i="<<curi<<endl;
+        //int curi*(grain);
+        if(curi>0);
+//            if(curi<allpt)angle=(qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x())
+//                +qAtan2(Spline[curi+1].y()-Spline[curi].y(),Spline[curi+1].x()-Spline[curi].x()))*0.5;
+//            else
+//                angle=qAtan2(Spline[curi].y()-Spline[curi-1].y(),Spline[curi].x()-Spline[curi-1].x());
+        else angle=qAtan2(Spline[2].y()-Spline[1].y(),Spline[2].x()-Spline[1].x());
+        //qDebug()<<angle<<endl;
         pp.save();
         pp.translate(curpos.x(),curpos.y());
        // pp.drawEllipse(0,0,2,2);
         pp.rotate(angle/3.14*180);
-        pp.translate(-w/2.0,-h);
+        pp.translate(-w/2.0,-h+2.0);//to be real
         QPixmap carpix;
         carpix.load("E:\\2016_2\\Animation\\ex1\\car.png");
         pp.drawPixmap(0,0,w,h,carpix);
@@ -173,6 +187,11 @@ void MainWindow::on_cleanbtn_clicked()
     isline=true;
     iscar=false;
     isball=false;
+    if(Curve)
+    {
+        delete Curve;
+        Curve=NULL;
+    }
     this->init();
     this->update();
 }
@@ -203,7 +222,7 @@ void MainWindow::on_carbtn_clicked()
         isball=false;
         ui->start->setEnabled(true);
     }
-    curi=1;
+    curi=0;
     curpos.setX(Spline[0].x());
     curpos.setY(Spline[0].y());
     this->update();
@@ -218,7 +237,8 @@ void MainWindow::on_ballbtn_clicked()
         iscar=false;
         ui->start->setEnabled(true);
     }
-    curi=1;
+    curi=0;
+    ballv=0.0;
     curpos.setX(Spline[0].x());
     curpos.setY(Spline[0].y());
     this->update();
@@ -250,20 +270,26 @@ void MainWindow::timerUpDate()
         break;
     }
     curarc+=v;
-    while(arc[curi][1]<curarc&&curi<allpt)curi++;
-    curi--;
-    if(curi==allpt-1)
+    while(ArcAll[curi]<curarc&&curi<=n)curi++;
+    if(curi>0)curi--;
+    if(curi==n)
     {
         timer->stop();
-        curpos.setX(Spline[curi].x());
-        curpos.setY(Spline[curi].y());
+        curpos.setX(points[curi-1].x());
+        curpos.setY(points[curi-1].y());
     }else
     {
-        double di=curarc-arc[curi][1];
-        double f=di/arc[curi+1][0];
-        qDebug()<<curi<<" "<<di<<"  "<<arc[curi+1][0]<<endl;
-        curpos.setX((1-f)*Spline[curi].x()+f*Spline[curi+1].x());
-        curpos.setY((1-f)*Spline[curi].y()+f*Spline[curi+1].y());
+        double di=curarc-ArcAll[curi];
+        //double f=di/arc[curi+1][0];
+        //double f=Curve->findArc(curi,di);
+        angle=Curve->FindArc(curi,di,&curpos);
+       // curpos.setX(Curve->FindArc(curi,di).x());
+       // curpos.setY(Curve->FindArc(curi,di).y());
+       // angle=Curve->calAng(i,u);
+        //qDebug()<<curi<<" "<<di<<"  "<<Arc[curi+1]<<endl;
+        qDebug()<<curi<<curpos.x()<<","<<curpos.y()<<endl;
+        //curpos.setX((1-f)*Spline[curi].x()+f*Spline[curi+1].x());
+        //curpos.setY((1-f)*Spline[curi].y()+f*Spline[curi+1].y());
     }
     Pix.fill(Qt::white);
     this->update();
@@ -278,7 +304,8 @@ void MainWindow::on_potbtn_clicked()
     this->update();
 }
 
-void MainWindow::on_spinBox_valueChanged(const QString &arg1)
+void MainWindow::on_spinBox_valueChanged(const QString &)
 {
     on_Createbtn_clicked();
 }
+

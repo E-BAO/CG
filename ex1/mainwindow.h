@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "cspline.h"
 #include <QMainWindow>
 #include <QPoint>
 #include <QPixmap>
@@ -44,9 +45,11 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    CSpline *Curve;
     QPoint *points;
-    QPoint Spline[1024];
-    double arc[1024][2];
+    QPoint *Spline;
+    double *Arc,*ArcAll;
+    //double arc[1024][2];
     int n;
     int allpt;
     int grain;
@@ -58,6 +61,7 @@ private:
     double tension;
     double angle;
     double ballv;
+    double A,B,C,D,E;
     QPixmap tempPix;
     QPixmap Pix;
     bool isdrawing;
